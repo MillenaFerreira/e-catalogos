@@ -12,16 +12,19 @@ export default function ProductDisplay() {
   const [productIndex, setProductIndex] = useState(0);
   const [accumulatedTotal, setAccumulatedTotal] = useState(0);
   const [selectedImage, setSelectedImage] = useState("");
-  const [quantity, setQuantity] = useState(0);
   const [size, setSize] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchRef, setSearchRef] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
+  const [productTotals, setProductTotals] = useState<{ [key: string]: number }>({});
+
   const filteredProducts = products.filter((product) => product.category === selectedCategory);
   const product = filteredProducts[productIndex];
 
+  const quantity = product ? (quantities[product.reference] || 0) : 0;
   const price = product ? product.price : 0;
   const total = quantity * price;
 
@@ -30,11 +33,17 @@ export default function ProductDisplay() {
     quantity: sku.stock
   })) : [];
 
-
   useEffect(() => {
-    setAccumulatedTotal(prev => prev + (Math.max(0, quantity) * price));
-  }, [quantity]);
+    const currentTotal = productTotals[product.reference] || 0;
+    if (currentTotal !== total) {
+      setProductTotals(prev => ({
+        ...prev,
+        [product.reference]: total
+      }));
 
+      setAccumulatedTotal(prev => prev + (total - currentTotal));
+    }
+  }, [total]);
 
   const changeCategory = (direction: number) => {
     const currentIndex = categories.indexOf(selectedCategory);
@@ -43,41 +52,24 @@ export default function ProductDisplay() {
     setSelectedImage("");
   };
 
-
-  const [cartItems, setCartItems] = useState<{ name: string, quantity: number, total: number }[]>([]);
-  const addToAccumulatedTotal = () => {
-    const newItem = { name: product.name, quantity, total };
-    setCartItems(prevItems => [...prevItems, newItem]);
-  
-    setQuantity(0);
-  
-    console.clear();
-
-  };
-
   const changeProduct = (direction: number) => {
-    addToAccumulatedTotal();
-  
-    let newProductIndex = (productIndex + direction + filteredProducts.length) % filteredProducts.length;
-  
-    if (newProductIndex === 0 && direction === 1) {
+    let newProductIndex = productIndex + direction;
+
+    if (newProductIndex < 0) {
       const currentCategoryIndex = categories.indexOf(selectedCategory);
-      const nextCategory = categories[(currentCategoryIndex + 1) % categories.length];
-      setSelectedCategory(nextCategory);
-      setProductIndex(0);
-    } else if (newProductIndex === filteredProducts.length - 1 && direction === -1) {
+      const prevCategoryIndex = (currentCategoryIndex - 1 + categories.length) % categories.length;
+      setSelectedCategory(categories[prevCategoryIndex]);
+      newProductIndex = products.filter(p => p.category === categories[prevCategoryIndex]).length - 1;
+    } else if (newProductIndex >= filteredProducts.length) {
       const currentCategoryIndex = categories.indexOf(selectedCategory);
-      const prevCategory = categories[(currentCategoryIndex - 1 + categories.length) % categories.length];
-      setSelectedCategory(prevCategory);
-      setProductIndex(filteredProducts.length - 1);
-    } else {
-      setProductIndex(newProductIndex);
+      const nextCategoryIndex = (currentCategoryIndex + 1) % categories.length;
+      setSelectedCategory(categories[nextCategoryIndex]);
+      newProductIndex = 0;
     }
-  
+
+    setProductIndex(newProductIndex);
     setSelectedImage("");
   };
-  
-
 
   const filterProductByRef = (ref: string) => {
     const trimmedRef = ref.trim();
@@ -102,7 +94,6 @@ export default function ProductDisplay() {
     setErrorMessage("");
     setIsSearchModalOpen(false);
   };
-  
 
   return (
     <div className={styles.container}>
@@ -157,21 +148,19 @@ export default function ProductDisplay() {
             <span>R$ {total.toFixed(2)}</span>
           </div>
           <div className={styles.quantityControl}>
-            <FaMinus
-              className={styles.icon}
-              onClick={() => {
-                setQuantity(prev => {
-                  const newQuantity = Math.max(0, prev - 1);
-                  setAccumulatedTotal(newQuantity * price);
-                  return newQuantity;
-                });
-              }}
-            />
+            <FaMinus className={styles.icon} onClick={() => {
+              setQuantities(prev => ({
+                ...prev,
+                [product.reference]: Math.max(0, (prev[product.reference] || 0) - 1)
+              }));
+            }} />
             <span>{quantity}</span>
-            <FaPlus
-              className={styles.icon}
-              onClick={() => setQuantity(prev => prev + 1)}
-            />
+            <FaPlus className={styles.icon} onClick={() => {
+              setQuantities(prev => ({
+                ...prev,
+                [product.reference]: (prev[product.reference] || 0) + 1
+              }));
+            }} />
           </div>
           <div className={styles.current}>
             <span><strong>Acumulado</strong></span>
@@ -179,8 +168,6 @@ export default function ProductDisplay() {
           </div>
         </div>
       </div>
-
-
 
       {/* Seleção de Tamanho */}
       <div className={styles.footer}>

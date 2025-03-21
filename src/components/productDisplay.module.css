@@ -54,13 +54,9 @@
     font-weight: bold;
 }
 
-
-
-
-
 .image_container {
     flex: 1;
-    height: 65vh;
+    height: 55vh;
     max-height: 650px;
     display: flex;
     justify-content: center;
@@ -101,9 +97,6 @@
     text-align: center;
 }
 
-
-
-
 .thumbnails {
     display: flex;
     justify-content: center;
@@ -137,6 +130,7 @@
     padding: 16px;
     margin: 0px 20px;
     overflow: hidden;
+    font-size: 1.8vh;
 }
 
 .details .info {
@@ -176,10 +170,6 @@
 .quantityControl span {
     border: 1px solid var(--primary-light-blue);
 }
-
-
-
-
 
 .footer {
     display: flex;
