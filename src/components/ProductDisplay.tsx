@@ -4,6 +4,7 @@ import Modal from "../components/modal/Modal";
 import productsData from "../data/products.json";
 import styles from "./productDisplay.module.css";
 
+// Obtendo os produtos e as categorias únicas a partir do JSON
 const products = productsData.products;
 const categories = Array.from(new Set(products.map((product) => product.category)));
 
@@ -21,18 +22,22 @@ export default function ProductDisplay() {
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [productTotals, setProductTotals] = useState<{ [key: string]: number }>({});
 
+  // Filtra os produtos pela categoria selecionada
   const filteredProducts = products.filter((product) => product.category === selectedCategory);
   const product = filteredProducts[productIndex];
 
+  // Filtra os produtos pela categoria selecionada
   const quantity = product ? (quantities[product.reference] || 0) : 0;
   const price = product ? product.price : 0;
   const total = quantity * price;
 
+  // Obtém a quantidade e o preço do produto atual
   const sizes = product ? product.skus.map(sku => ({
     size: sku.size,
     quantity: sku.stock
   })) : [];
 
+  // Atualiza o total acumulado quando o total de um produto muda
   useEffect(() => {
     const currentTotal = productTotals[product.reference] || 0;
     if (currentTotal !== total) {
@@ -45,6 +50,7 @@ export default function ProductDisplay() {
     }
   }, [total]);
 
+  // Alterna entre as categorias
   const changeCategory = (direction: number) => {
     const currentIndex = categories.indexOf(selectedCategory);
     setSelectedCategory(categories[(currentIndex + direction + categories.length) % categories.length]);
@@ -52,6 +58,7 @@ export default function ProductDisplay() {
     setSelectedImage("");
   };
 
+  // Alterna entre os produtos dentro das categorias
   const changeProduct = (direction: number) => {
     let newProductIndex = productIndex + direction;
 
@@ -71,6 +78,7 @@ export default function ProductDisplay() {
     setSelectedImage("");
   };
 
+  // Filtra o produto pela referência informada no input
   const filterProductByRef = (ref: string) => {
     const trimmedRef = ref.trim();
     if (trimmedRef === "") {
